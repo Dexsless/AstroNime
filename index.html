@@ -270,6 +270,72 @@
             background: linear-gradient(var(--primary), var(--secondary));
             border-radius: 10px;
         }
+
+        /* Search results styles */
+        .search-results {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            background: rgba(26, 6, 61, 0.95);
+            border: 1px solid rgba(110, 0, 255, 0.5);
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .search-result-item {
+            padding: 10px;
+            border-bottom: 1px solid rgba(110, 0, 255, 0.2);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .search-result-item:hover {
+            background: rgba(110, 0, 255, 0.2);
+        }
+
+        .search-result-item img {
+            width: 50px;
+            height: 70px;
+            object-fit: cover;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        .search-result-item .info {
+            flex: 1;
+        }
+
+        .search-result-item .title {
+            font-weight: 500;
+            margin-bottom: 3px;
+        }
+
+        .search-result-item .meta {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        #search-results-container {
+            position: relative;
+        }
+
+        .search-loading {
+            padding: 15px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .search-no-results {
+            padding: 15px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+        }
     </style>
 </head>
 <body>
@@ -298,13 +364,24 @@
                         <a class="nav-link" href="#">About</a>
                     </li>
                 </ul>
-                <div class="ms-lg-3 mt-3 mt-lg-0">
+                <div class="ms-lg-3 mt-3 mt-lg-0 d-flex align-items-center">
+                    <div class="input-group input-group-sm me-2" style="max-width: 200px;">
+                        <input type="text" id="search-input" class="form-control bg-transparent text-white border-secondary" placeholder="Search anime...">
+                        <button class="btn btn-primary" type="button" id="search-button">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
                     <button class="btn btn-primary btn-sm">Login</button>
                     <button class="btn btn-outline-light btn-sm ms-2">Register</button>
                 </div>
             </div>
         </div>
     </nav>
+
+    <!-- Search Results Dropdown -->
+    <div id="search-results-container">
+        <div class="search-results" id="search-results"></div>
+    </div>
 
     <!-- Hero Section -->
     <section class="hero">
@@ -426,6 +503,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Function to navigate to detail page
             function goToDetail(animeId) {
+                // Hide search results
+                searchResults.style.display = 'none';
+                // Clear search input
+                searchInput.value = '';
                 // Save scroll position
                 sessionStorage.setItem('scrollPosition', window.scrollY);
                 // Redirect to detail page
@@ -573,6 +654,89 @@
                 animateOnScroll();
                 window.addEventListener('scroll', animateOnScroll);
             }
+
+            // Search functionality
+            const searchInput = document.getElementById('search-input');
+            const searchButton = document.getElementById('search-button');
+            const searchResults = document.getElementById('search-results');
+            let searchTimeout;
+
+            // Function to perform search
+            function performSearch(query) {
+                if (!query.trim()) {
+                    searchResults.style.display = 'none';
+                    return;
+                }
+
+                searchResults.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin me-2"></i>Searching...</div>';
+                searchResults.style.display = 'block';
+
+                // Clear previous timeout if any
+                if (searchTimeout) {
+                    clearTimeout(searchTimeout);
+                }
+
+                // Debounce the search to avoid too many requests
+                searchTimeout = setTimeout(() => {
+                    fetch(`https://wajik-anime-api.vercel.app/samehadaku/search?q=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.ok && data.data && data.data.animeList.length > 0) {
+                                displaySearchResults(data.data.animeList);
+                            } else {
+                                searchResults.innerHTML = '<div class="search-no-results">No results found</div>';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Search error:', error);
+                            searchResults.innerHTML = '<div class="search-no-results">Error loading results</div>';
+                        });
+                }, 500);
+            }
+
+            // Function to display search results
+            function displaySearchResults(animeList) {
+                searchResults.innerHTML = animeList.map(anime => `
+                    <div class="search-result-item d-flex" onclick="goToDetail('${anime.animeId}')">
+                        <img src="${anime.poster}" alt="${anime.title}" loading="lazy">
+                        <div class="info">
+                            <div class="title">${anime.title}</div>
+                            <div class="meta">
+                                <span>${anime.type}</span>
+                                ${anime.score ? `<span class="ms-2"><i class="fas fa-star text-warning"></i> ${anime.score}</span>` : ''}
+                            </div>
+                            <div class="genres mt-1">
+                                ${anime.genreList.slice(0, 2).map(genre => 
+                                    `<span class="genre-badge">${genre.title}</span>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Event listeners for search
+            searchInput.addEventListener('input', (e) => {
+                performSearch(e.target.value);
+            });
+
+            searchButton.addEventListener('click', () => {
+                performSearch(searchInput.value);
+            });
+
+            // Hide search results when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!searchResults.contains(e.target)) {
+                    searchResults.style.display = 'none';
+                }
+            });
+
+            // Also hide results when pressing Escape
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    searchResults.style.display = 'none';
+                }
+            });
 
             // Make goToDetail function available globally
             window.goToDetail = goToDetail;
