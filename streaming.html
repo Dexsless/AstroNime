@@ -509,11 +509,7 @@
                 showLoading(true);
                 
                 const player = document.getElementById('player');
-                
-                // Some URL processing for specific hosts
-                if (videoUrl.includes('pixeldrain.com')) {
-                    videoUrl = videoUrl.replace('pixeldrain.com/u/', 'pixeldrain.com/embed/');
-                }
+
                 
                 player.src = videoUrl;
                 currentSource = videoUrl;
