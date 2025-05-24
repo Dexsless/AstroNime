@@ -362,7 +362,7 @@
             }
             
             // Fetch anime details from API
-            fetch(`https://wajik-anime-api.vercel.app/samehadaku/anime/${animeId}`)
+            fetch(`https://wajik-anime-api-seven.vercel.app/samehadaku/anime/${animeId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.ok && data.data) {
@@ -417,7 +417,7 @@
                                 <h4 class="section-title">Genres</h4>
                                 <div>
                                     ${anime.genreList.map(genre => `
-                                        <a href="https://wajik-anime-api.vercel.app${genre.href}" class="genre-badge text-decoration-none">
+                                        <a href="https://wajik-anime-api-seven.vercel.app${genre.href}" class="genre-badge text-decoration-none">
                                             ${genre.title}
                                         </a>
                                     `).join('')}

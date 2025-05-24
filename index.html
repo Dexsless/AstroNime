@@ -514,7 +514,7 @@
             }
 
             // Fetch anime data from API
-            fetch('https://wajik-anime-api.vercel.app/samehadaku/home')
+            fetch('https://wajik-anime-api-seven.vercel.app/samehadaku/home')
                 .then(response => response.json())
                 .then(data => {
                     if (data.ok && data.data) {
@@ -678,7 +678,7 @@
 
                 // Debounce the search to avoid too many requests
                 searchTimeout = setTimeout(() => {
-                    fetch(`https://wajik-anime-api.vercel.app/samehadaku/search?q=${encodeURIComponent(query)}`)
+                    fetch(`https://wajik-anime-api-seven.vercel.app/samehadaku/search?q=${encodeURIComponent(query)}`)
                         .then(response => response.json())
                         .then(data => {
                             if (data.ok && data.data && data.data.animeList.length > 0) {
